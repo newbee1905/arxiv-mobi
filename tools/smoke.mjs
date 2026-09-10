@@ -19,7 +19,7 @@
    ========================================================================= */
 
 import { chromium, devices } from 'playwright';
-import { readFile, mkdir, readdir } from 'node:fs/promises';
+import { readFile, writeFile, rm, mkdir, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const argv = process.argv.slice(2);
@@ -616,6 +616,24 @@ console.log('\n=== service worker ===');
     return { keys, cachedReaderCss: Boolean(hit) };
   });
   check(shellCached.cachedReaderCss === true, 'app shell is cached for offline use', shellCached);
+
+  /* The bug this guards against: a worker is installed, the site is
+     redeployed, and the shell cache keeps handing back the *previous*
+     deploy's JavaScript. Simulate a deploy by changing a file on disk
+     between two fetches through the worker. */
+  const probePath = new URL('../assets/js/.am-probe.js', import.meta.url);
+  const probeUrl = SITE + '/assets/js/.am-probe.js';
+  try {
+    await writeFile(probePath, 'export const build = "before";\n');
+    const before = await page.evaluate((u) => fetch(u).then((r) => r.text()), probeUrl);
+    await writeFile(probePath, 'export const build = "after";\n');
+    const after = await page.evaluate((u) => fetch(u).then((r) => r.text()), probeUrl);
+    check(/before/.test(before) && /after/.test(after),
+      'a redeployed file is not served stale by the worker', { before: before.trim(), after: after.trim() });
+  } finally {
+    await rm(probePath, { force: true });
+  }
+
   await swCtx.close();
 }
 

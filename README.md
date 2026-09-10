@@ -211,6 +211,25 @@ on the element, so switching back to a light theme restores the paper exactly.
   reclaims it. Papers you explicitly save are kept in preference to the
   dozen most recent ones.
 
+### Updates and caching
+
+The service worker serves this site's own HTML, JS and CSS **network-first**,
+falling back to the cached copy (immediately when offline, after 4 seconds
+when the network is merely slow). Cache-first would be quicker, but it hands
+back the previous deploy's JavaScript on the first load after an update, and
+stale code against a fresh page is worse than one round trip. Figures and
+icons stay cache-first, since they never change under a versioned URL.
+
+Registration also passes `updateViaCache: 'none'` and calls `update()` on
+every load, so a new worker is picked up even though GitHub Pages serves
+`sw.js` with `max-age=600`. When a newer worker takes over, the landing page
+reloads itself and the reader offers a *Reload* toast rather than yanking the
+page out from under you mid-paper.
+
+If you ever suspect you are on stale code, one hard reload settles it; the
+smoke test covers the case by redeploying a file underneath a live worker and
+asserting the new bytes come back.
+
 ## Privacy
 
 Preferences, reading positions and the reading list live in `localStorage`;

@@ -6,6 +6,7 @@ import { parseArxivId, readerHref } from './arxiv-id.js';
 import * as prefs from './settings.js';
 import * as library from './library.js';
 import { icon } from './icons.js';
+import { registerServiceWorker } from './sw-register.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -182,8 +183,5 @@ function toast(message) {
 
 /* ---------------------------- service worker ---------------------------- */
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => { /* optional */ });
-  });
-}
+// Nothing to lose on this page: take the update straight away.
+registerServiceWorker();

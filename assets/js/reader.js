@@ -12,6 +12,7 @@ import { createPeek, createBackChip } from './peek.js';
 import { renderToc, trackSections } from './toc.js';
 import * as library from './library.js';
 import { icon } from './icons.js';
+import { registerServiceWorker } from './sw-register.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -732,11 +733,13 @@ document.addEventListener('keydown', (e) => {
 
 /* ---------------------------- service worker ---------------------------- */
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ });
-  });
-}
+// Mid-paper is the wrong moment to reload out from under someone, so offer
+// it instead of taking it.
+registerServiceWorker({
+  onUpdate: (reload) => toast('A new version of the reader is ready', {
+    label: 'Reload', action: reload, ms: 10000,
+  }),
+});
 
 window.addEventListener('online', () => toast('Back online', { ms: 1500 }));
 window.addEventListener('offline', () => toast('Offline — saved papers still work', { ms: 2600 }));

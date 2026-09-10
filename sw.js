@@ -8,7 +8,7 @@
      assets  — figures, so an offline paper is not a wall of broken images
    ========================================================================= */
 
-const VERSION = 'v2';
+const VERSION = 'v3';
 const SHELL = `arxiv-mobi-shell-${VERSION}`;
 const PAPERS = 'arxiv-mobi-papers-v2';
 const ASSETS = 'arxiv-mobi-assets-v2';
@@ -34,6 +34,7 @@ const SHELL_FILES = [
   'assets/js/reader.js',
   'assets/js/recolor.js',
   'assets/js/settings.js',
+  'assets/js/sw-register.js',
   'assets/js/toc.js',
   'assets/js/transform.js',
   'assets/icons/icon.svg',
@@ -96,6 +97,30 @@ async function cachedResponse(cacheName, request) {
   }
 }
 
+/**
+ * Network first, falling back to the cached copy — and to the cached copy
+ * anyway if the network has not answered in `timeoutMs`.
+ */
+async function networkFirst(cache, req, key, timeoutMs = 4000) {
+  const network = fetch(req)
+    .then((res) => {
+      if (res && res.ok && res.type === 'basic') cache.put(key, res.clone()).catch(() => {});
+      return res;
+    })
+    .catch(() => null);
+
+  const cached = await cache.match(key);
+  if (!cached) {
+    const res = await network;
+    return res || new Response('Offline', { status: 503, statusText: 'Offline' });
+  }
+  const res = await Promise.race([
+    network,
+    new Promise((resolve) => setTimeout(() => resolve(null), timeoutMs)),
+  ]);
+  return res || cached;
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
@@ -129,21 +154,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  /* Our own files: serve from cache, refresh in the background. */
+  /* Our own code: newest wins, cache is the safety net.
+     Cache-first would be faster, but it hands back the previous deploy's
+     JavaScript on the first load after an update — stale code against a
+     fresh page is worse than one round trip. The race below keeps a slow
+     network from blocking: whatever answers first, within 4s, is used. */
   if (url.origin === self.location.origin) {
+    const isDocument = req.mode === 'navigate';
+    const isCode = isDocument || /\.(?:html|js|css|webmanifest)$/i.test(url.pathname);
     event.respondWith((async () => {
       const cache = await caches.open(SHELL);
-      const hit = await cache.match(req, { ignoreSearch: url.pathname.endsWith('read.html') });
-      const network = fetch(req).then((res) => {
-        if (res && res.ok && res.type === 'basic') cache.put(req, res.clone());
-        return res;
-      }).catch(() => null);
+      // One cache entry per page, not per paper: read.html?id=… is read.html.
+      const key = isDocument ? new Request(url.origin + url.pathname) : req;
+      if (isCode) return networkFirst(cache, req, key);
+      const hit = await cache.match(key);
       if (hit) return hit;
-      const res = await network;
-      if (res) return res;
-      const shell = await cache.match(new URL('index.html', self.registration.scope).href);
-      if (shell && req.mode === 'navigate') return shell;
-      return new Response('Offline', { status: 503, statusText: 'Offline' });
+      try {
+        const res = await fetch(req);
+        if (res && res.ok && res.type === 'basic') cache.put(key, res.clone()).catch(() => {});
+        return res;
+      } catch {
+        return new Response('Offline', { status: 503, statusText: 'Offline' });
+      }
     })());
   }
 });
