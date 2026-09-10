@@ -178,6 +178,15 @@ a final sweep that turns anything still overflowing into a scroll container.
 That last pass is the safety net for LaTeXML's habit of baking absolute point
 widths into `\rule`s, `\parbox`es and verbatim spans.
 
+`\resizebox`/`\scalebox` around a table gets undone rather than honoured.
+LaTeXML implements them as a fixed-size box plus a `translate(…) scale(…)` on
+the contents, with geometry computed for the paper's page width; kept as-is on
+a phone it drags the table out of its own box and off the side of the screen,
+so the caption renders and the table does not. Dropping the wrapper hands the
+table to the fit pass, which scales it by font size instead — crisp, still
+selectable, and free to scroll. Real rotations (`\rotatebox`, used for slanted
+column headers) are left alone, because there the transform *is* the content.
+
 **Re-colouring.** LaTeXML writes author colour choices into inline styles, as
 either `background-color:#F2F2F2` or the newer `--ltx-bg-color` custom
 properties. `reader.css` wires those properties to real declarations and

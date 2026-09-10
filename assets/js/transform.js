@@ -233,6 +233,54 @@ function prepareFigures(article) {
   return figures;
 }
 
+/**
+ * Undo LaTeX's \resizebox / \scalebox around tables and figures.
+ *
+ * LaTeXML implements them as a fixed-size box plus a transform on the
+ * content:
+ *
+ *   <div class="ltx_transformed_outer" style="width:276pt;height:93.6pt">
+ *     <span class="ltx_transformed_inner"
+ *           style="transform:translate(-148.6pt,50.4pt) scale(0.48)">
+ *
+ * arXiv's own stylesheet cancels that transform for tables and figures,
+ * because the geometry only makes sense at the paper's page width. Keep it
+ * and the table is scaled into a sliver and shifted off the left of the
+ * screen — it simply never appears. Dropping the wrapper gives us the table
+ * at its natural size, which the fit pass in reader.js then scales by font
+ * size (crisp, still selectable) and scrolls if it must.
+ *
+ * Genuine rotations (\rotatebox, used for slanted column headers) are left
+ * alone: there the transform *is* the content's meaning.
+ */
+function neutralizeScaleBoxes(article) {
+  for (const outer of article.querySelectorAll('.ltx_transformed_outer')) {
+    const inner = outer.querySelector(':scope > .ltx_transformed_inner');
+    const transform = inner ? inner.style.transform || '' : '';
+    if (!inner || !transform) continue;
+    if (/rotate|skew|matrix/i.test(transform)) continue;
+
+    const holdsTable = Boolean(inner.querySelector('table, .ltx_tabular'));
+    const inFloat = outer.closest('.ltx_table, .ltx_figure, .ltx_float, .ltx_eqn_cell, .ltx_flex_cell');
+    if (!holdsTable && !inFloat) continue;      // leave inline \scalebox text as authored
+
+    inner.style.removeProperty('transform');
+    inner.style.removeProperty('width');
+    inner.style.removeProperty('height');
+    outer.style.removeProperty('width');
+    outer.style.removeProperty('height');
+    outer.style.removeProperty('vertical-align');
+    outer.classList.add('am-unscaled');
+
+    // The wrapper existed only to carry the scale; two nested inline-blocks
+    // around a table just get in the way of the scroll box.
+    if (holdsTable && outer.parentNode) {
+      while (inner.firstChild) outer.parentNode.insertBefore(inner.firstChild, outer);
+      outer.remove();
+    }
+  }
+}
+
 /** Equation and table scroll boxes, plus table micro-typography. */
 function prepareTablesAndMath(article) {
   for (const t of article.querySelectorAll('table.ltx_equation, table.ltx_eqn_table')) {
@@ -356,6 +404,7 @@ export function buildPaper(htmlText, baseUrl, parsed) {
 }
 
 function finish(article, meta, baseUrl) {
+  neutralizeScaleBoxes(article);
   prepareTablesAndMath(article);
   const figures = prepareFigures(article);
   prepareNotes(article);

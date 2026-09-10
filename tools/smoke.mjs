@@ -176,6 +176,45 @@ for (const id of await fixtureIds()) {
   check(base.align === 'left' || base.align === 'start', 'prose is not justified', base.align);
   check(base.fontSize <= 18, 'reader font size is phone-sized', base.fontSize);
 
+  /* ---- tables actually appear ----
+     A \resizebox'd table carries a transform sized for the paper's page
+     width. Left in place it drags the table out of its own box and off the
+     side of the screen: the caption renders and the table does not. The
+     invariant is simply that a table sits inside the figure that holds it. */
+  const tables = await page.evaluate(() => {
+    const paper = document.getElementById('paper');
+    const all = [...paper.querySelectorAll('table.ltx_tabular')];
+    const bad = [];
+    for (const t of all) {
+      const box = t.closest('figure, .ltx_table') || t.parentElement;
+      if (!box) continue;
+      const r = t.getBoundingClientRect();
+      const b = box.getBoundingClientRect();
+      const escapedLeft = r.left < b.left - 8;
+      const tallerThanItsBox = r.height > b.height + 8;
+      // A one-cell layout table holding a rule is legitimately narrow;
+      // only a genuinely zero-area box means nothing rendered.
+      const collapsed = r.width < 6 || r.height < 6;
+      if (escapedLeft || tallerThanItsBox || collapsed) {
+        bad.push({
+          id: t.id,
+          table: [Math.round(r.left), Math.round(r.width), Math.round(r.height)],
+          box: [Math.round(b.left), Math.round(b.width), Math.round(b.height)],
+          reason: escapedLeft ? 'dragged outside its figure'
+            : tallerThanItsBox ? 'overflows its figure' : 'collapsed',
+        });
+      }
+    }
+    return { total: all.length, bad: bad.slice(0, 3) };
+  });
+  check(tables.bad.length === 0, 'every table sits inside its own figure', tables);
+
+  const scaleBoxes = await page.evaluate(() =>
+    [...document.querySelectorAll('#paper .ltx_transformed_inner')]
+      .filter((el) => /scale|translate/i.test(el.style.transform || '') &&
+        el.querySelector('table, .ltx_tabular')).length);
+  check(scaleBoxes === 0, 'no \\resizebox transform is left on a table', scaleBoxes);
+
   /* ---- nothing escapes the viewport ---- */
   const overflow = await page.evaluate(() => {
     const paper = document.getElementById('paper');
