@@ -1,0 +1,767 @@
+/* =========================================================================
+   arxiv-mobi — reader overrides for arXiv / LaTeXML (ltx_*) HTML
+   -------------------------------------------------------------------------
+   arXiv's own stylesheet is dropped entirely; this file is the whole visual
+   contract for paper content. Everything is expressed in tokens from
+   base.css so all four themes are correct by construction.
+
+   Scope: `.am-paper` wraps the imported <article class="ltx_document">.
+   ========================================================================= */
+
+/* ----------------------------- page frame ------------------------------- */
+
+.am-paper {
+  font-family: var(--reader-font);
+  font-size: var(--reader-fs);
+  line-height: var(--reader-lh);
+  color: var(--text);
+  max-width: var(--reader-measure);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4.5vw, 28px) 25vh;
+  /* Left-aligned by default: justified text on a ~45-character phone column
+     produces rivers and huge word gaps. Justification is opt-in. */
+  text-align: var(--reader-align);
+  hyphens: var(--reader-hyphens);
+  -webkit-hyphens: var(--reader-hyphens);
+  font-kerning: normal;
+  font-variant-numeric: oldstyle-nums proportional-nums;
+}
+.am-paper[data-font="sans"] { font-variant-numeric: normal; }
+
+/* LaTeXML leaves structural scaffolding that means nothing on a phone. */
+.am-paper .ltx_pagination,
+.am-paper .ltx_page_logo,
+.am-paper .ltx_rdf,
+.am-paper .ltx_TOC,
+.am-paper .ltx_toclist,
+.am-paper .ltx_page_navbar,
+.am-paper #infobox,
+.am-paper .ltx_dates { display: none; }
+
+/* =================== structural semantics (do not theme) ================
+   LaTeXML's markup is mostly <span>s that depend on its stylesheet for
+   their display type: `.ltx_inline-block` with a hardcoded `width:327pt`
+   is a plain inline box without it, so `width`/`max-width` are ignored and
+   the content spills off the screen. Since we drop arXiv's CSS wholesale,
+   the structural half has to be restated here. Sourced from the rules
+   LaTeXML/ar5iv actually rely on; visual choices stay in the sections
+   below, which come later and therefore win.
+   ======================================================================= */
+
+.am-paper .ltx_p,
+.am-paper .ltx_para,
+.am-paper .ltx_block,
+.am-paper .ltx_logical-block,
+.am-paper .ltx_quote,
+.am-paper .ltx_listing,
+.am-paper .ltx_eqn_div,
+.am-paper .ltx_itemize,
+.am-paper .ltx_enumerate,
+.am-paper .ltx_description,
+.am-paper .ltx_lstlisting:not(.ltx_text) { display: block; }
+
+.am-paper .ltx_inline-block,
+.am-paper .ltx_inline-block .ltx_para,
+.am-paper .ltx_parbox,
+.am-paper .ltx_minipage,
+.am-paper .ltx_minipage .ltx_float,
+.am-paper span.ltx_framed,
+.am-paper .ltx_framed_rectangle:not(:empty),
+.am-paper .ltx_picture,
+.am-paper .ltx_rule,
+.am-paper span.ltx_transformed_inner,
+.am-paper .ltx_transformed_outer,
+.am-paper .ltx_scalerel { display: inline-block; }
+.am-paper .ltx_parbox,
+.am-paper .ltx_inline-logical-block { text-indent: 0; }
+.am-paper .ltx_minipage .ltx_float .ltx_caption { display: block; }
+.am-paper .ltx_transformed_outer { position: relative; }
+
+.am-paper .ltx_inline-logical-block,
+.am-paper .ltx_inline-logical-block .ltx_para,
+.am-paper .ltx_inline-quote,
+.am-paper .ltx_lstlisting.ltx_text,
+.am-paper li.ltx_item > .ltx_tag,
+.am-paper span.ltx_item .ltx_tag + span.ltx_para,
+.am-paper .ltx_bibitem > .ltx_tag,
+.am-paper .ltx_title_theorem,
+.am-paper .ltx_title_proof,
+.am-paper .ltx_runin { display: inline; }
+
+.am-paper .ltx_nodisplay,
+.am-paper .ltx_listing_data,
+.am-paper .ltx_tag_note,
+.am-paper .ltx_rdf { display: none; }
+
+/* Tables are spans in LaTeXML output often enough to matter. */
+.am-paper .ltx_tabular { display: inline-table; }
+.am-paper .ltx_tabular.ltx_centering { display: table; }
+.am-paper .ltx_thead, .am-paper .ltx_tfoot, .am-paper .ltx_tbody { display: table-row-group; }
+.am-paper .ltx_tr { display: table-row; }
+.am-paper .ltx_td, .am-paper .ltx_th { display: table-cell; }
+.am-paper .ltx_tabular .ltx_td, .am-paper .ltx_tabular .ltx_th { white-space: normal; }
+.am-paper .ltx_eqn_table { display: table; }
+.am-paper .ltx_eqn_row { display: table-row; }
+.am-paper .ltx_eqn_cell { display: table-cell; }
+.am-paper .ltx_inline-block .ltx_eqn_table,
+.am-paper .ltx_td .ltx_eqn_table { display: block; }
+
+.am-paper .ltx_itemize > .ltx_item,
+.am-paper .ltx_enumerate > .ltx_item,
+.am-paper .ltx_description > .ltx_item { display: list-item; }
+
+/* Maths never wraps; over-wide formulas get a scroller instead. */
+.am-paper math, .am-paper .ltx_markedasmath { white-space: nowrap; }
+.am-paper .ltx_cite > .ltx_ref { white-space: nowrap; text-indent: 0; }
+
+.am-paper .ltx_align_top { vertical-align: top; }
+.am-paper .ltx_align_bottom { vertical-align: bottom; }
+.am-paper .ltx_align_middle { vertical-align: middle; }
+.am-paper .ltx_align_baseline { vertical-align: baseline; }
+/* Floated figures have nowhere to float in a one-column phone layout. */
+.am-paper .ltx_align_floatleft, .am-paper .ltx_align_floatright { float: none; }
+
+.am-paper .ltx_graphics { display: block; }
+.am-paper .ltx_p > img.ltx_graphics,
+.am-paper mtext > .ltx_graphics,
+.am-paper .ltx_markedasmath > .ltx_graphics { display: inline; }
+.am-paper .ltx_caption .ltx_graphics,
+.am-paper .ltx_personname .ltx_graphics,
+.am-paper .ltx_ref > .ltx_graphics { display: inline-block; }
+
+/* ----------------------------- block rhythm ----------------------------- */
+
+.am-paper p,
+.am-paper .ltx_p {
+  margin: 0 0 var(--reader-para-gap);
+  text-align: inherit;
+  /* LaTeX's first-line indent reads as an accident in a narrow column. */
+  text-indent: 0;
+}
+.am-paper .ltx_para > :last-child,
+.am-paper p:last-child { margin-bottom: 0; }
+.am-paper .ltx_para { margin: 0 0 var(--reader-para-gap); }
+
+/* LaTeXML's own alignment classes must not beat the reader setting for
+   running prose, but they still matter for figures, tables and math. */
+.am-paper .ltx_p.ltx_align_justify,
+.am-paper .ltx_para.ltx_align_justify { text-align: inherit; }
+.am-paper .ltx_align_center { text-align: center; }
+.am-paper .ltx_centering { text-align: center; }
+.am-paper td.ltx_align_right, .am-paper th.ltx_align_right { text-align: right; }
+.am-paper td.ltx_align_left,  .am-paper th.ltx_align_left  { text-align: left; }
+.am-paper td.ltx_align_center, .am-paper th.ltx_align_center { text-align: center; }
+
+/* --------------------------- front matter ------------------------------- */
+
+.am-paper .ltx_title_document {
+  font-size: 1.42em;
+  line-height: 1.22;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 0.2em 0 0.7em;
+  text-align: left;
+  text-wrap: balance;
+  color: var(--text-strong);
+}
+
+.am-paper .ltx_authors {
+  margin: 0 0 1.2em;
+  font-size: 0.92em;
+  line-height: 1.45;
+  color: var(--text-dim);
+  text-align: left;
+}
+.am-paper .ltx_creator { display: inline; }
+.am-paper .ltx_personname { color: var(--text); font-weight: 500; }
+.am-paper .ltx_author_before,
+.am-paper .ltx_author_after { display: none; }
+.am-paper .ltx_creator + .ltx_creator::before { content: " · "; color: var(--text-faint); }
+/* Affiliations/emails: kept, but out of the way behind the footnote marks. */
+.am-paper .ltx_role_institutetext,
+.am-paper .ltx_role_address,
+.am-paper .ltx_role_email { display: block; font-size: 0.92em; color: var(--text-faint); }
+
+.am-paper .ltx_abstract {
+  margin: 0 0 1.6em;
+  padding: 0.9em 1em;
+  background: var(--surface-1);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-m);
+  font-size: 0.95em;
+}
+.am-paper .ltx_abstract .ltx_title_abstract {
+  margin: 0 0 0.5em;
+  font-size: 0.78em;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.am-paper .ltx_keywords {
+  font-size: 0.88em;
+  color: var(--text-dim);
+  margin: 0 0 1.4em;
+}
+
+/* ------------------------------ headings -------------------------------- */
+
+.am-paper h1, .am-paper h2, .am-paper h3,
+.am-paper h4, .am-paper h5, .am-paper h6 {
+  font-family: var(--reader-font);
+  color: var(--text-strong);
+  line-height: 1.25;
+  text-align: left;
+  text-wrap: pretty;
+  hyphens: none;
+  -webkit-hyphens: none;
+  scroll-margin-top: calc(var(--bar-h) + 14px);
+}
+.am-paper .ltx_title_section {
+  font-size: 1.2em;
+  font-weight: 650;
+  margin: 1.9em 0 0.6em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--rule);
+}
+.am-paper .ltx_title_subsection { font-size: 1.06em; font-weight: 650; margin: 1.5em 0 0.45em; }
+.am-paper .ltx_title_subsubsection { font-size: 1em; font-weight: 650; margin: 1.3em 0 0.4em; }
+.am-paper .ltx_title_paragraph,
+.am-paper .ltx_title_subparagraph {
+  font-size: 1em; font-weight: 650; margin: 1.2em 0 0.3em;
+}
+.am-paper .ltx_title_paragraph.ltx_runin,
+.am-paper .ltx_title_subparagraph.ltx_runin { display: inline; margin-right: 0.5em; }
+
+/* Section numbers: present, but quiet. */
+.am-paper .ltx_tag_section,
+.am-paper .ltx_tag_subsection,
+.am-paper .ltx_tag_subsubsection,
+.am-paper .ltx_tag_appendix {
+  color: var(--text-faint);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  margin-right: 0.12em;
+}
+.am-paper section { margin: 0; }
+
+/* ------------------------------- lists --------------------------------- */
+
+.am-paper ul, .am-paper ol {
+  margin: 0 0 var(--reader-para-gap);
+  padding-left: 1.4em;
+}
+.am-paper .ltx_itemize, .am-paper .ltx_enumerate, .am-paper .ltx_description {
+  list-style: none;
+  padding-left: 0;
+}
+.am-paper .ltx_item {
+  position: relative;
+  padding-left: 1.8em;
+  margin-bottom: 0.45em;
+}
+.am-paper .ltx_item > .ltx_tag_item {
+  position: absolute;
+  left: 0;
+  top: 0;
+  min-width: 1.5em;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95em;
+}
+.am-paper .ltx_description .ltx_item > .ltx_tag_item {
+  position: static;
+  display: inline;
+  color: var(--text-strong);
+  font-weight: 600;
+  margin-right: 0.4em;
+}
+.am-paper .ltx_description .ltx_item { padding-left: 0; }
+.am-paper li { margin-bottom: 0.4em; }
+
+/* ------------------------- emphasis & inline ---------------------------- */
+
+.am-paper .ltx_font_bold, .am-paper .ltx_font_bold * { font-weight: 650; }
+.am-paper .ltx_font_italic, .am-paper .ltx_emph { font-style: italic; }
+.am-paper .ltx_font_smallcaps { font-variant-caps: small-caps; letter-spacing: 0.02em; }
+.am-paper .ltx_font_typewriter { font-family: var(--font-mono); font-size: 0.9em; }
+.am-paper .ltx_font_serif { font-family: var(--font-serif); }
+.am-paper .ltx_font_sansserif { font-family: var(--font-sans); }
+.am-paper .ltx_font_upright { font-style: normal; }
+
+.am-paper code, .am-paper tt, .am-paper kbd, .am-paper samp {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--surface-2);
+  padding: 0.1em 0.32em;
+  border-radius: 4px;
+}
+
+.am-paper mark, .am-paper .am-hit {
+  background: var(--mark);
+  color: #17181a;
+  border-radius: 3px;
+  padding: 0 0.1em;
+}
+
+/* ---------------------- links, refs and citations ----------------------- */
+
+.am-paper a {
+  color: var(--accent);
+  text-decoration: none;
+  /* Slightly enlarged hit area without disturbing the line box. */
+  padding: 0.12em 0.04em;
+  margin: -0.12em -0.04em;
+  border-radius: 3px;
+}
+.am-paper a:hover { text-decoration: underline; }
+.am-paper a.ltx_ref:active,
+.am-paper a.ltx_ref.is-peeking { background: var(--accent-soft); }
+
+/* External links are underlined so they read as leaving the paper. */
+.am-paper a.ltx_href, .am-paper a.ltx_url {
+  text-decoration: underline;
+  text-decoration-color: var(--accent-soft);
+  overflow-wrap: anywhere;
+}
+
+.am-paper cite, .am-paper .ltx_cite { font-style: normal; }
+.am-paper .ltx_cite a.ltx_ref {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95em;
+}
+
+/* Footnotes: LaTeXML inlines the note body. Hide it and let the mark open
+   a popover instead of dumping the text mid-sentence. */
+.am-paper .ltx_note_outer { display: none; }
+.am-paper .ltx_note_mark,
+.am-paper sup.ltx_note_mark {
+  color: var(--accent);
+  font-size: 0.72em;
+  vertical-align: super;
+  line-height: 0;
+  cursor: pointer;
+  padding: 0.3em 0.25em;
+  margin: -0.3em -0.1em;
+}
+.am-paper .ltx_note { cursor: pointer; }
+
+/* ------------------------------- rules --------------------------------- */
+
+.am-paper hr, .am-paper .ltx_rule {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 1.5em 0;
+  height: 0;
+  background: none;
+}
+
+/* ====================== horizontal scroll boxes =========================
+   Wide content — tables, display math, code — is never squashed. It gets a
+   scroll box with edge fades so it is obvious that more exists sideways.
+   ======================================================================= */
+
+.am-scrollbox {
+  position: relative;
+  margin: 1.1em 0;
+  max-width: 100%;
+}
+.am-scrollbox > .am-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+}
+.am-scrollbox > .am-scroll::-webkit-scrollbar { height: 5px; }
+.am-scrollbox > .am-scroll::-webkit-scrollbar-thumb {
+  background: var(--rule-strong); border-radius: 3px;
+}
+.am-scrollbox::before, .am-scrollbox::after {
+  content: "";
+  position: absolute; top: 0; bottom: 0;
+  width: 22px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s var(--ease);
+  z-index: 1;
+}
+.am-scrollbox::before { left: 0;  background: linear-gradient(to right, var(--bg), transparent); }
+.am-scrollbox::after  { right: 0; background: linear-gradient(to left,  var(--bg), transparent); }
+.am-scrollbox[data-edge~="left"]::before  { opacity: 1; }
+.am-scrollbox[data-edge~="right"]::after { opacity: 1; }
+
+/* Last-resort containment. LaTeXML bakes absolute point widths into rules,
+   parboxes and verbatim spans; no amount of class-by-class styling catches
+   every case, so reader.js measures the rendered result and turns whatever
+   still overflows into its own scroller. The page itself never scrolls
+   sideways. */
+.am-paper .am-contain {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.am-paper .am-contain::-webkit-scrollbar { height: 4px; }
+.am-paper .am-contain::-webkit-scrollbar-thumb { background: var(--rule-strong); border-radius: 2px; }
+/* Point-sized rules and boxes can never exceed the column. */
+.am-paper .ltx_rule,
+.am-paper .ltx_inline-block,
+.am-paper span.ltx_framed,
+.am-paper .ltx_transformed_outer { max-width: 100%; }
+
+/* =========================== display maths =============================
+   LaTeXML renders display equations as <table class="ltx_equation">, with
+   empty padding cells on both sides to fake centring and the equation
+   number in its own cell. On a phone that table is usually wider than the
+   screen, so: drop the padding cells, let the row scroll, and pin the
+   equation number to the right edge so it stays visible while scrolling.
+   ======================================================================= */
+
+.am-paper .ltx_eqn_center_padleft,
+.am-paper .ltx_eqn_center_padright { display: none; }
+
+.am-paper .ltx_equation,
+.am-paper .ltx_eqn_table {
+  width: auto;
+  min-width: 0;
+  margin: 0 auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  /* Set per-equation by the fit pass when an equation is wider than the
+     column; 1em means "as authored". */
+  font-size: var(--eq-scale, 1em);
+}
+.am-paper .ltx_eqn_table td,
+.am-paper .ltx_equation td { border: 0; padding: 0.15em 0.2em; }
+.am-paper .ltx_eqn_row { vertical-align: baseline; }
+
+.am-paper td.ltx_eqn_eqno, .am-paper .ltx_tag_equation {
+  color: var(--text-faint);
+  font-size: 0.82em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-left: 0.6em;
+}
+.am-scrollbox--eq { margin: 1.25em 0; }
+.am-scrollbox--eq > .am-scroll { padding: 0.15em 0; }
+/* Keep the equation tag glued to the right edge of the viewport while the
+   equation body scrolls beneath it. */
+.am-scrollbox--eq td.ltx_eqn_eqno {
+  position: sticky;
+  right: 0;
+  background: var(--bg);
+  box-shadow: -6px 0 8px -6px var(--bg);
+}
+
+/* Inline maths must never stretch a line box or overflow the column.
+   A single long formula can be 600px wide; reader.js shrinks it when the
+   overflow is mild and gives it its own scroller when it is not. */
+.am-paper .ltx_Math { font-size: inherit; }
+.am-paper .am-mathscroll {
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  vertical-align: text-bottom;
+  scrollbar-width: thin;
+}
+.am-paper .am-mathscroll::-webkit-scrollbar { height: 4px; }
+.am-paper .am-mathscroll::-webkit-scrollbar-thumb { background: var(--rule-strong); border-radius: 2px; }
+.am-paper .am-mathscroll--block { display: block; margin: 0.8em 0; }
+.am-paper math { font-family: inherit; }
+.am-paper math[display="inline"] { max-width: 100%; }
+.am-paper mtext { font-family: var(--reader-font); }
+/* Fallback when a browser has no MathML: reader.js swaps each formula for
+   its TeX source, which at least stays readable. */
+.am-paper .am-tex {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--surface-2);
+  border-radius: 4px;
+  padding: 0.05em 0.3em;
+  white-space: pre-wrap;
+}
+
+/* ============================== tables =================================
+   This is where arXiv's dark mode falls over: LaTeXML writes literal light
+   colours into inline styles (--ltx-bg-color / background-color) and the
+   stock sheet just passes them through, so a "dark" page grows blinding
+   white table rows with black text. Two halves to the fix: the custom
+   properties are honoured here, and recolor.js rewrites their *values* for
+   dark themes before paint. Everything else is token-driven.
+   ======================================================================= */
+
+.am-paper .ltx_tabular {
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin: 0 auto;
+  font-size: var(--table-fs);
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1.4;
+  color: var(--text);
+  background: transparent;
+}
+.am-paper .ltx_tabular td, .am-paper .ltx_tabular th {
+  padding: 0.42em 0.62em;
+  border: 0;
+  vertical-align: top;
+  text-align: left;
+}
+.am-paper .ltx_tabular th, .am-paper .ltx_th {
+  font-weight: 650;
+  color: var(--text-strong);
+}
+.am-paper .ltx_thead .ltx_tr,
+.am-paper .ltx_tabular tr.am-headrow { background: var(--surface-2); }
+/* Zebra striping for legibility on a narrow screen. Cells that carry their
+   own (re-coloured) background win, because inline styles outrank this. */
+:root[data-zebra="on"] .am-paper .ltx_tabular.am-zebra > tbody > tr:nth-child(even),
+:root[data-zebra="on"] .am-paper .ltx_tabular.am-zebra > tr:nth-child(even) { background: var(--surface-1); }
+.am-paper .ltx_tabular tr:hover { background: var(--accent-soft); }
+
+/* booktabs-style rules, mapped onto theme lines. */
+.am-paper .ltx_border_t  { border-top: 1px solid var(--rule); }
+.am-paper .ltx_border_tt { border-top: 1.5px solid var(--rule-strong); }
+.am-paper .ltx_border_b  { border-bottom: 1px solid var(--rule); }
+.am-paper .ltx_border_bb { border-bottom: 1.5px solid var(--rule-strong); }
+.am-paper .ltx_border_l  { border-left: 1px solid var(--rule); }
+.am-paper .ltx_border_ll { border-left: 1.5px solid var(--rule-strong); }
+.am-paper .ltx_border_r  { border-right: 1px solid var(--rule); }
+.am-paper .ltx_border_rr { border-right: 1.5px solid var(--rule-strong); }
+
+/* Short cells (numbers, labels) keep their line; prose cells wrap. */
+.am-paper .ltx_tabular .am-nw { white-space: nowrap; }
+
+/* Honour LaTeXML's colour custom properties — and nothing else from the
+   original stylesheet. recolor.js keeps these values theme-appropriate. */
+.am-paper [style*="--ltx-bg-color"] { background-color: var(--ltx-bg-color); }
+.am-paper [style*="--ltx-fg-color"] { color: var(--ltx-fg-color); }
+.am-paper [style*="--ltx-border-color"] { border-color: var(--ltx-border-color); }
+
+/* ============================= figures ================================= */
+
+.am-paper figure,
+.am-paper .ltx_figure,
+.am-paper .ltx_table,
+.am-paper .ltx_float {
+  margin: 1.6em 0;
+  padding: 0;
+  max-width: 100%;
+  text-align: center;
+}
+.am-paper .ltx_figure_panel { margin: 0.5em 0; }
+
+/* Sub-figure rows: stack instead of overflowing. */
+.am-paper .ltx_flex_figure {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8em 1em;
+  justify-content: center;
+  align-items: flex-start;
+}
+.am-paper .ltx_flex_cell {
+  flex: 1 1 min(100%, 15rem);
+  min-width: min(100%, 11rem);
+  max-width: 100%;
+}
+/* LaTeXML hardcodes minipage widths in points; they have no meaning here. */
+.am-paper .ltx_minipage,
+.am-paper .ltx_block,
+.am-paper .ltx_parbox { max-width: 100% !important; }
+
+.am-paper img,
+.am-paper .ltx_graphics,
+.am-paper svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* The figure plate. In dark themes a light card sits behind figures: most
+   arXiv plots are black-on-transparent line art that would otherwise turn
+   into an invisible smudge. Users who prefer inversion or dimming can
+   switch the treatment in settings. */
+.am-paper .am-figmedia {
+  display: inline-block;
+  position: relative;
+  max-width: 100%;
+  background: var(--figure-plate);
+  border-radius: var(--radius-s);
+  padding: var(--figure-pad, 0);
+  line-height: 0;
+}
+:root[data-theme="dark"] .am-paper .am-figmedia,
+:root[data-theme="black"] .am-paper .am-figmedia { --figure-pad: 6px; }
+:root[data-figures="invert"] .am-paper .am-figmedia,
+:root[data-figures="dim"] .am-paper .am-figmedia,
+:root[data-figures="raw"] .am-paper .am-figmedia { --figure-pad: 0; }
+
+.am-paper .am-figmedia > img,
+.am-paper .am-figmedia > svg,
+.am-paper .ltx_picture { filter: var(--figure-filter); }
+.am-paper .ltx_picture {
+  background: var(--figure-plate);
+  border-radius: var(--radius-s);
+  padding: var(--figure-pad, 0);
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Tap-to-zoom affordance. */
+.am-paper img[data-am-zoom] { cursor: zoom-in; }
+.am-paper .am-figmedia[data-am-zoomable]::after {
+  content: "";
+  position: absolute;
+  right: 6px; bottom: 6px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(20, 22, 24, 0.55) no-repeat center /
+    13px 13px url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.6-3.6M11 8v6M8 11h6'/%3E%3C/svg%3E");
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+/* Captions */
+.am-paper figcaption,
+.am-paper .ltx_caption {
+  margin: 0.6em auto 0;
+  font-family: var(--font-ui);
+  font-size: 0.82em;
+  line-height: 1.45;
+  color: var(--text-dim);
+  text-align: left;
+  max-width: 34rem;
+  hyphens: none;
+  -webkit-hyphens: none;
+}
+.am-paper .ltx_table > figcaption { margin: 0 auto 0.6em; }
+.am-paper .ltx_tag_figure,
+.am-paper .ltx_tag_table {
+  font-weight: 650;
+  color: var(--text);
+}
+.am-paper .ltx_figure_panel > figcaption { font-size: 0.8em; text-align: center; }
+
+/* ===================== theorems, proofs, listings ====================== */
+
+.am-paper .ltx_theorem {
+  margin: 1.3em 0;
+  padding: 0.85em 1em;
+  background: var(--surface-1);
+  border-left: 3px solid var(--accent-dim);
+  border-radius: 0 var(--radius-m) var(--radius-m) 0;
+  font-size: 0.97em;
+}
+.am-paper .ltx_theorem .ltx_title_theorem {
+  margin: 0 0 0.4em;
+  font-size: 0.95em;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+.am-paper .ltx_theorem_definition, .am-paper .ltx_theorem_remark { border-left-color: var(--rule-strong); }
+.am-paper .ltx_proof { margin: 1.2em 0; font-size: 0.97em; }
+.am-paper .ltx_proof .ltx_title_proof { font-style: italic; font-weight: 600; display: inline; margin-right: 0.4em; }
+
+.am-paper .ltx_listing,
+.am-paper .ltx_lstlisting,
+.am-paper pre {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  line-height: 1.5;
+  background: var(--surface-1);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-m);
+  padding: 0.7em 0.85em;
+  margin: 1.2em 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  white-space: pre;
+  text-align: left;
+  hyphens: none;
+  -webkit-hyphens: none;
+}
+.am-paper .ltx_listing code,
+.am-paper pre code { background: none; padding: 0; font-size: 1em; }
+.am-paper .ltx_listingline { display: block; white-space: pre; }
+.am-paper .ltx_lst_numbers_left .ltx_listingline::before { color: var(--text-faint); }
+.am-paper .ltx_framed_rectangle { border: 1px solid var(--rule); }
+.am-paper .ltx_algorithm {
+  margin: 1.3em 0;
+  padding: 0.7em 0.9em;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-m);
+  background: var(--surface-1);
+  font-size: 0.88em;
+  text-align: left;
+}
+.am-paper .ltx_algorithm .ltx_tabular { font-size: 1em; }
+
+/* ============================ bibliography ============================= */
+
+.am-paper .ltx_bibliography { margin-top: 2em; }
+.am-paper .ltx_biblist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.88em;
+  line-height: 1.45;
+}
+.am-paper .ltx_bibitem {
+  position: relative;
+  padding: 0.55em 0 0.55em 2.6em;
+  border-bottom: 1px solid var(--rule);
+  margin: 0;
+  text-align: left;
+  hyphens: none;
+  -webkit-hyphens: none;
+  scroll-margin-top: calc(var(--bar-h) + 14px);
+}
+.am-paper .ltx_bibitem:last-child { border-bottom: 0; }
+.am-paper .ltx_bibitem > .ltx_tag_bibitem {
+  position: absolute;
+  left: 0; top: 0.55em;
+  width: 2.3em;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95em;
+}
+.am-paper .ltx_bibblock { display: block; }
+.am-paper .ltx_bibitem:target,
+.am-paper .am-flash {
+  background: var(--accent-soft);
+  border-radius: var(--radius-s);
+}
+
+.am-paper .ltx_acknowledgements {
+  margin: 2em 0 0;
+  font-size: 0.92em;
+  color: var(--text-dim);
+}
+.am-paper .ltx_appendix { margin-top: 2em; }
+
+/* LaTeXML conversion errors: visible, but not alarming. */
+.am-paper .ltx_ERROR, .am-paper .ltx_error {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  color: var(--danger);
+  background: var(--surface-2);
+  border-radius: 4px;
+  padding: 0 0.3em;
+}
+.am-paper .ltx_missing, .am-paper .ltx_ref_self { color: var(--text-faint); }
+
+/* ============================== print ================================== */
+
+@media print {
+  .am-paper { max-width: none; padding: 0; font-size: 11pt; }
+  .am-scrollbox > .am-scroll { overflow: visible; }
+  .am-scrollbox::before, .am-scrollbox::after { display: none; }
+  .am-paper .am-figmedia { background: none; padding: 0; }
+  .am-paper .am-figmedia > img { filter: none; }
+}

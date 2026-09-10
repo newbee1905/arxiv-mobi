@@ -1,0 +1,301 @@
+/* =========================================================================
+   arxiv-mobi — reader chrome: toolbar, ToC, lightbox, peek popover, states
+   ========================================================================= */
+
+/* ----------------------------- top toolbar ------------------------------ */
+
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 40;
+  height: calc(var(--bar-h) + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) max(4px, env(safe-area-inset-left)) 0 max(4px, env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-overlay);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--rule);
+  transition: transform 0.22s var(--ease);
+}
+/* Out of the way while reading down, back on the first upward flick. */
+.topbar.is-hidden { transform: translateY(-100%); }
+@media (prefers-reduced-motion: reduce) { .topbar { transition: none; } }
+
+.topbar__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.86rem;
+  font-weight: 550;
+  line-height: 1.25;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 0.4em;
+}
+
+.progress {
+  position: fixed;
+  top: calc(var(--bar-h) + env(safe-area-inset-top));
+  left: 0;
+  z-index: 41;
+  height: 2px;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.1s linear, opacity 0.2s var(--ease);
+  pointer-events: none;
+}
+.topbar.is-hidden + .progress { opacity: 0; }
+
+main { padding-top: calc(var(--bar-h) + env(safe-area-inset-top) + 12px); }
+
+/* ------------------------- paper meta strip ---------------------------- */
+
+.papermeta {
+  max-width: var(--reader-measure);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4.5vw, 28px);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em 0.9em;
+  align-items: center;
+}
+.papermeta a { color: var(--text-dim); }
+.papermeta__badge {
+  font-variant-numeric: tabular-nums;
+  padding: 0.15em 0.5em;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+}
+
+/* ------------------------------- states -------------------------------- */
+
+.state {
+  max-width: 34rem;
+  margin: 14vh auto;
+  padding: 0 24px;
+  text-align: center;
+}
+.state__icon { color: var(--text-faint); margin-bottom: 12px; }
+.state__icon svg { width: 44px; height: 44px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.state h2 { margin: 0 0 0.4em; font-size: 1.15rem; }
+.state p { margin: 0 0 1.2em; color: var(--text-dim); }
+.state__actions { display: flex; flex-direction: column; gap: 10px; }
+.state code {
+  font-family: var(--font-mono);
+  background: var(--surface-2);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* Skeleton loader: same rhythm as real text, so nothing jumps on swap. */
+.skeleton { max-width: var(--reader-measure); margin: 0 auto; padding: 8px clamp(16px, 4.5vw, 28px); }
+.skeleton__line {
+  height: 0.85em;
+  margin-bottom: 0.75em;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--surface-1), var(--surface-3), var(--surface-1));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+.skeleton__line--title { height: 1.5em; width: 80%; margin-bottom: 1.2em; }
+.skeleton__line--short { width: 45%; }
+.skeleton__block { height: 7em; margin: 1.4em 0; border-radius: var(--radius-m); background: var(--surface-1); }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton__line { animation: none; } }
+
+/* ------------------------- table of contents --------------------------- */
+
+.toc { list-style: none; margin: 0; padding: 0; }
+.toc li { margin: 0; }
+.toc a {
+  display: block;
+  padding: 0.62em 16px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  border-left: 3px solid transparent;
+}
+.toc a:hover { background: var(--accent-soft); }
+.toc a.is-active {
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.toc__num { color: var(--text-faint); font-variant-numeric: tabular-nums; margin-right: 0.5em; }
+.toc [data-level="3"] a { padding-left: 30px; font-size: 0.86rem; color: var(--text-dim); }
+.toc [data-level="4"] a { padding-left: 44px; font-size: 0.84rem; color: var(--text-dim); }
+.toc [data-level="5"] a { padding-left: 56px; font-size: 0.82rem; color: var(--text-faint); }
+.toc__empty { padding: 16px; color: var(--text-dim); font-size: 0.9rem; }
+
+/* --------------------------- peek popover ------------------------------ */
+/* Tapping a citation, footnote, figure or equation reference shows it here
+   instead of throwing the reader to the end of the document. */
+
+.peek { max-height: 62vh; }
+.peek__kind {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.peek__body {
+  font-family: var(--reader-font);
+  font-size: calc(var(--reader-fs) * 0.94);
+  line-height: 1.5;
+}
+.peek__body .ltx_tag_bibitem { display: none; }
+.peek__body .ltx_bibitem { padding-left: 0; border: 0; }
+/* A cloned <li> loses its list context; do not let a stray bullet back in. */
+.peek__body li, .peek__body .ltx_item { list-style: none; display: block; padding-left: 0; }
+.peek__body .ltx_item > .ltx_tag_item { position: static; }
+.peek__body figure, .peek__body .ltx_figure, .peek__body .ltx_table { margin: 0.4em 0; }
+.peek__body img { max-width: 100%; height: auto; }
+.peek__body .ltx_note_outer { display: inline; }
+.peek__body .ltx_note_mark { display: none; }
+.peek__body .ltx_note_type { font-weight: 600; }
+.peek__foot { display: flex; gap: 8px; margin-top: 14px; }
+.peek__foot .btn { flex: 1 1 auto; }
+
+/* Return chip after following a reference. */
+.backchip {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  transform: translate(-50%, 160%);
+  z-index: 45;
+  display: inline-flex; align-items: center; gap: 0.4em;
+  padding: 0.6em 1.1em;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--bg-raised);
+  color: var(--text);
+  box-shadow: var(--shadow-2);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: transform 0.22s var(--ease);
+}
+.backchip.is-open { transform: translate(-50%, 0); }
+.backchip svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ------------------------------ lightbox ------------------------------- */
+
+.lb {
+  position: fixed;
+  inset: 0;
+  width: 100%; height: 100%;
+  max-width: none; max-height: none;
+  background: #0b0c0d;
+  display: none;
+}
+.lb[open] { display: grid; grid-template-rows: auto 1fr auto; }
+.lb::backdrop { background: #0b0c0d; }
+
+.lb__bar {
+  display: flex; align-items: center; gap: 4px;
+  padding: calc(4px + env(safe-area-inset-top)) 6px 4px;
+  color: #e8e6e3;
+  z-index: 2;
+}
+.lb__count { font-size: 0.82rem; font-variant-numeric: tabular-nums; opacity: 0.8; padding: 0 0.6em; flex: 1 1 auto; }
+.lb .iconbtn { color: #e8e6e3; }
+.lb .iconbtn:hover { background: rgba(255,255,255,0.12); }
+.lb .iconbtn[aria-pressed="true"] { color: #ffd479; background: rgba(255,255,255,0.14); }
+
+.lb__stage {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  touch-action: none;          /* we drive pan/pinch ourselves */
+  min-height: 0;
+  cursor: grab;
+}
+.lb__stage.is-zoomed { cursor: move; }
+.lb__img {
+  max-width: 100%;
+  max-height: 100%;
+  transform-origin: 0 0;
+  will-change: transform;
+  user-select: none;
+  -webkit-user-drag: none;
+  background: #f2f1ee;     /* transparent line art needs a ground */
+  border-radius: 2px;
+}
+.lb__img.is-inverted { filter: invert(1) hue-rotate(180deg); background: #0f1011; }
+.lb__img.is-plain { background: transparent; }
+
+.lb__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px; height: 64px;
+  border: 0;
+  background: rgba(255,255,255,0.08);
+  color: #e8e6e3;
+  cursor: pointer;
+  display: grid; place-items: center;
+}
+.lb__nav svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.lb__nav--prev { left: 0; border-radius: 0 8px 8px 0; }
+.lb__nav--next { right: 0; border-radius: 8px 0 0 8px; }
+.lb__nav[disabled] { opacity: 0.25; cursor: default; }
+
+.lb__cap {
+  max-height: 6.4em;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 10px 16px calc(14px + env(safe-area-inset-bottom));
+  color: #bdbab5;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  background: rgba(255,255,255,0.04);
+}
+.lb__cap:empty { display: none; }
+.lb__cap.is-open { max-height: 34vh; overflow-y: auto; cursor: default; }
+.lb__cap:not(.is-open)::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: 0; height: 2em;
+  background: linear-gradient(to top, #14161a, transparent);
+  pointer-events: none;
+}
+.lb__cap { position: relative; }
+.lb__cap .ltx_tag_figure, .lb__cap .ltx_tag_table { color: #e8e6e3; font-weight: 650; }
+.lb__hint { color: #8a8884; font-size: 0.74rem; margin-top: 6px; }
+
+/* --------------------------- more-actions sheet ------------------------ */
+
+.actionlist { list-style: none; margin: 0; padding: 0; }
+.actionlist li { border-bottom: 1px solid var(--rule); }
+.actionlist li:last-child { border-bottom: 0; }
+.actionlist button, .actionlist a {
+  display: flex; align-items: center; gap: 0.8em;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.7em 0;
+  border: 0; background: none;
+  color: var(--text);
+  font-size: 0.95rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.actionlist svg { width: 20px; height: 20px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.actionlist .hint { display: block; font-size: 0.78rem; color: var(--text-dim); }
+.actionlist__text { flex: 1 1 auto; min-width: 0; }
+
+/* ------------------------------ wide screens --------------------------- */
+
+@media (min-width: 62rem) {
+  .topbar { padding-left: 12px; padding-right: 12px; }
+  .peek { left: 50%; right: auto; bottom: 24px; transform: translateX(-50%); width: min(38rem, 92vw); border-radius: var(--radius-l); }
+}

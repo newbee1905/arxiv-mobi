@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arxiv-mobi</title>
+<link rel="icon" href="/assets/icons/icon.svg" type="image/svg+xml">
+<style>
+  body { margin: 0; font: 15px/1.5 system-ui, sans-serif; color: #1a1c1e; background: #fff; }
+  @media (prefers-color-scheme: dark) { body { background: #1c1e20; color: #c6c1b9; } a { color: #86aede; } }
+  .box { max-width: 30rem; margin: 16vh auto; padding: 0 24px; text-align: center; }
+  code { font-family: ui-monospace, monospace; background: rgba(128,128,128,0.18); padding: 0.1em 0.35em; border-radius: 4px; }
+</style>
+<script>
+/* Pretty URLs without a server: GitHub Pages serves this page for any
+   unknown path, so swapping the host of an arXiv URL just works —
+   arxiv.org/abs/2401.12345 → <site>/abs/2401.12345 → the reader. */
+(function () {
+  var path = '';
+  try { path = decodeURIComponent(location.pathname); } catch (e) { path = location.pathname; }
+  var search = new URLSearchParams(location.search);
+  var direct = search.get('id') || search.get('url') || search.get('text');
+
+  var RE = /(\d{4}\.\d{4,5}(?:v\d+)?)|([a-z][a-z-]+(?:\.[A-Za-z]{2})?\/\d{7}(?:v\d+)?)/;
+  var base;
+  var id = null;
+
+  var m = RE.exec(path);
+  if (m) {
+    id = m[0];
+    base = path.slice(0, m.index).replace(/(?:abs|pdf|html|ps|paper|papers|p)\/$/i, '');
+  } else {
+    base = location.hostname.indexOf('github.io') >= 0
+      ? '/' + path.split('/').filter(Boolean)[0] + '/'
+      : '/';
+    id = direct;
+  }
+  if (base.charAt(base.length - 1) !== '/') base += '/';
+
+  window.__amBase = base;
+  if (id) location.replace(base + 'read.html?id=' + encodeURIComponent(id));
+}());
+</script>
+</head>
+<body>
+<div class="box">
+  <h1>Nothing here</h1>
+  <p>That address does not look like an arXiv paper. Try an identifier such as
+     <code>2401.12345</code>.</p>
+  <p><a id="home" href="/">Go to arxiv-mobi</a></p>
+</div>
+<script>
+  document.getElementById('home').href = (window.__amBase || '/');
+</script>
+</body>
+</html>

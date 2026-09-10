@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="color-scheme" content="light dark">
+<title>arxiv-mobi — arXiv papers, phone-shaped</title>
+<meta name="description" content="Open any arXiv paper that has an HTML version and read it with typography, tables, figures and dark themes built for a phone.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="arxiv-mobi">
+<link rel="preconnect" href="https://arxiv.org" crossorigin>
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/landing.css">
+<script>
+(function () {
+  try {
+    var p = JSON.parse(localStorage.getItem('arxivmobi:prefs:v1') || '{}');
+    var t = p.theme || 'auto';
+    if (t === 'auto') {
+      t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.dataset.theme = t;
+  } catch (e) { /* defaults are fine */ }
+}());
+</script>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <span class="masthead__mark" aria-hidden="true">aM</span>
+    <div class="masthead__text">
+      <h1>arxiv-mobi</h1>
+      <p>arXiv HTML papers, re-dressed for a phone</p>
+    </div>
+    <button class="iconbtn" id="appearanceBtn" aria-label="Appearance settings" title="Appearance"></button>
+  </header>
+
+  <form class="searchform" id="openForm" novalidate>
+    <div class="searchform__row">
+      <input type="text" id="idInput" name="id" inputmode="text" autocapitalize="off"
+             autocorrect="off" spellcheck="false" enterkeyhint="go"
+             placeholder="2401.12345, or paste any arXiv link"
+             aria-label="arXiv identifier or URL">
+      <button class="btn btn--primary" type="submit">Read</button>
+    </div>
+    <p class="hint" id="formHint">Takes an id, an <code>abs</code>/<code>pdf</code>/<code>html</code> URL, a DOI, or <code>arXiv:2401.12345v2</code>.</p>
+    <p class="formerror" id="formError" hidden></p>
+  </form>
+
+  <div class="chips" id="examples">
+    <a class="chip" href="read.html?id=1706.03762">Attention Is All You Need</a>
+    <a class="chip" href="read.html?id=2005.14165">GPT-3</a>
+    <a class="chip" href="read.html?id=math/0211159">Perelman, Ricci flow</a>
+  </div>
+
+  <section class="block" id="continueBlock" hidden>
+    <div class="block__head"><h2>Continue reading</h2></div>
+    <ul class="cards" id="continueList"></ul>
+  </section>
+
+  <section class="block" id="libraryBlock" hidden>
+    <div class="block__head">
+      <h2>Recent papers</h2>
+      <button type="button" id="clearLibrary">Clear</button>
+    </div>
+    <ul class="cards" id="libraryList"></ul>
+  </section>
+
+  <section class="block">
+    <div class="block__head"><h2>What this fixes</h2></div>
+    <ul class="featurelist">
+      <li><span data-icon="type"></span><span><b>Type sized for a hand, not a monitor.</b> Left-aligned by default — justified text in a 45-character column is all rivers and gaps. Size, line spacing, serif/sans and justification are all adjustable.</span></li>
+      <li><span data-icon="toc"></span><span><b>Tables that survive dark mode.</b> arXiv passes the authors' literal colours through, so "dark mode" grows blinding white rows. Every baked-in colour is remapped into the theme, hue kept, contrast checked.</span></li>
+      <li><span data-icon="image"></span><span><b>Figures open full screen.</b> Tap any figure for pinch, double-tap and wheel zoom, swipe to the next one, caption in reach, invert for dark rooms.</span></li>
+      <li><span data-icon="moon"></span><span><b>A dark theme modelled on sioyek.</b> Deep neutral ground, ink dimmed to stop the glow, amber marks — plus a true-black variant for OLED and a sepia one for lamp light.</span></li>
+      <li><span data-icon="search"></span><span><b>Wide equations and tables fit.</b> They are scaled down to the column where possible and scroll sideways when not, with the equation number pinned in view.</span></li>
+      <li><span data-icon="book"></span><span><b>Citations peek instead of teleport.</b> Tapping <span class="chip" style="padding:0 .3em">[17]</span> shows the reference where you are; footnotes and figure references too.</span></li>
+      <li><span data-icon="cloudoff"></span><span><b>Works without a connection.</b> Install it to the home screen, save papers with their figures, and pick up at the paragraph you left.</span></li>
+      <li><span data-icon="target"></span><span><b>No server, no accounts, no tracking.</b> Papers are fetched straight from arXiv by your browser; preferences and reading positions never leave the device.</span></li>
+    </ul>
+  </section>
+
+  <section class="block">
+    <div class="block__head"><h2>Fast ways in</h2></div>
+    <div class="howto">
+      <p><b>Swap the host.</b> Any arXiv address works if you put this site in front of it:
+         <code id="swapExample">…/abs/2401.12345</code> opens the reader directly.</p>
+      <p><b>Bookmarklet.</b> Drag this to your bookmarks bar, then press it on any arXiv page:
+         <br><a class="bookmarklet" id="bookmarklet" href="#">Read in arxiv-mobi</a></p>
+      <p><b>Share sheet.</b> Install this site as an app and arXiv links can be shared
+         straight into it from any other app.</p>
+      <p id="installHint" hidden><b>Install.</b> Use your browser's <i>Add to Home Screen</i> to get
+         a standalone reader with offline papers.</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>Papers belong to their authors, under the licence shown on arXiv.</span>
+    <a href="https://github.com/newbee1905/arxiv-mobi" target="_blank" rel="noopener noreferrer">Source</a>
+    <a href="https://info.arxiv.org/about/accessible_HTML.html" target="_blank" rel="noopener noreferrer">About arXiv HTML</a>
+  </footer>
+</div>
+
+<dialog class="sheet" id="appearanceSheet" aria-label="Appearance">
+  <div class="sheet__grip"></div>
+  <div class="sheet__head">
+    <h2 class="sheet__title">Appearance</h2>
+    <button class="iconbtn" data-close aria-label="Close"></button>
+  </div>
+  <div class="sheet__body" id="appearanceBody"></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="assets/js/landing.js"></script>
+</body>
+</html>

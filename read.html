@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="description" content="Read arXiv HTML papers with a layout built for phones.">
+<meta name="color-scheme" content="light dark">
+<title>Reading — arxiv-mobi</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="arxiv-mobi">
+<link rel="preconnect" href="https://arxiv.org" crossorigin>
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/reader.css">
+<link rel="stylesheet" href="assets/css/app.css">
+<script>
+/* Apply saved preferences before first paint: a flash of the wrong theme is
+   the most jarring thing a reader app can do. Mirrors settings.js. */
+(function () {
+  try {
+    var p = JSON.parse(localStorage.getItem('arxivmobi:prefs:v1') || '{}');
+    var r = document.documentElement;
+    var t = p.theme || 'auto';
+    if (t === 'auto') {
+      t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    r.dataset.theme = t;
+    r.dataset.themePref = p.theme || 'auto';
+    r.dataset.figures = p.figures || 'plate';
+    r.dataset.font = p.font || 'serif';
+    r.dataset.justify = p.justify ? 'on' : 'off';
+    r.dataset.zebra = p.zebra === false ? 'off' : 'on';
+    if (p.size) r.style.setProperty('--reader-fs', (17 * p.size / 100).toFixed(2) + 'px');
+    if (p.lineHeight) r.style.setProperty('--reader-lh', (p.lineHeight / 100).toFixed(2));
+    if (p.measure) r.style.setProperty('--reader-measure', p.measure + 'rem');
+    if (p.font === 'sans') r.style.setProperty('--reader-font', 'var(--font-sans)');
+    if (p.justify) {
+      r.style.setProperty('--reader-align', 'justify');
+      r.style.setProperty('--reader-hyphens', 'auto');
+    }
+  } catch (e) { /* defaults are fine */ }
+}());
+</script>
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <a class="iconbtn" href="./" id="homeBtn" aria-label="Library and search" title="Library"></a>
+  <span class="topbar__title" id="barTitle">Loading…</span>
+  <button class="iconbtn" id="tocBtn" aria-label="Contents" title="Contents (t)"></button>
+  <button class="iconbtn" id="typeBtn" aria-label="Reading settings" title="Reading settings (a)"></button>
+  <button class="iconbtn" id="themeBtn" aria-label="Change theme" title="Change theme (d)"></button>
+  <button class="iconbtn" id="moreBtn" aria-label="More actions" title="More"></button>
+</header>
+<div class="progress" id="progress"></div>
+
+<main id="main">
+  <div class="skeleton" id="skeleton" aria-hidden="true">
+    <div class="skeleton__line skeleton__line--title"></div>
+    <div class="skeleton__line skeleton__line--short"></div>
+    <div class="skeleton__block"></div>
+    <div class="skeleton__line"></div>
+    <div class="skeleton__line"></div>
+    <div class="skeleton__line"></div>
+    <div class="skeleton__line skeleton__line--short"></div>
+    <div class="skeleton__line"></div>
+    <div class="skeleton__line"></div>
+  </div>
+
+  <div id="state" hidden></div>
+
+  <div class="papermeta" id="paperMeta" hidden></div>
+  <div class="am-paper" id="paper"></div>
+</main>
+
+<dialog class="drawer" id="tocDrawer" aria-label="Table of contents">
+  <div class="drawer__head">
+    <h2 class="sheet__title">Contents</h2>
+    <button class="iconbtn" data-close aria-label="Close contents"></button>
+  </div>
+  <div class="drawer__body"><ul class="toc" id="tocList"></ul></div>
+</dialog>
+
+<dialog class="sheet" id="typeSheet" aria-label="Reading settings">
+  <div class="sheet__grip"></div>
+  <div class="sheet__head">
+    <h2 class="sheet__title">Reading settings</h2>
+    <button class="iconbtn" data-close aria-label="Close settings"></button>
+  </div>
+  <div class="sheet__body" id="typeBody"></div>
+</dialog>
+
+<dialog class="sheet" id="moreSheet" aria-label="More actions">
+  <div class="sheet__grip"></div>
+  <div class="sheet__head">
+    <h2 class="sheet__title" id="moreTitle">This paper</h2>
+    <button class="iconbtn" data-close aria-label="Close"></button>
+  </div>
+  <div class="sheet__body"><ul class="actionlist" id="moreList"></ul></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="assets/js/reader.js"></script>
+</body>
+</html>
