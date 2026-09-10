@@ -634,6 +634,30 @@ console.log('\n=== service worker ===');
     await rm(probePath, { force: true });
   }
 
+  /* The in-app escape hatch must clear code without clearing the user's
+     papers, positions or preferences. */
+  await page.evaluate(async () => {
+    localStorage.setItem('arxivmobi:prefs:v1', JSON.stringify({ theme: 'sepia', size: 125 }));
+    localStorage.setItem('arxivmobi:library:v1', JSON.stringify([{ slug: 'keepme', title: 'Kept' }]));
+    const cache = await caches.open('arxiv-mobi-assets-v2');
+    await cache.put('https://arxiv.org/html/keep/probe.png',
+      new Response(new Uint8Array([1, 2, 3]), { headers: { 'content-type': 'image/png' } }));
+  });
+  await page.click('#forceRefresh');
+  await page.waitForURL(/fresh=/, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  const afterRefresh = await page.evaluate(async () => ({
+    url: location.search,
+    prefs: localStorage.getItem('arxivmobi:prefs:v1'),
+    library: localStorage.getItem('arxivmobi:library:v1'),
+    savedFigure: Boolean(await caches.open('arxiv-mobi-assets-v2')
+      .then((c) => c.match('https://arxiv.org/html/keep/probe.png'))),
+  }));
+  check(/fresh=/.test(afterRefresh.url), 'force refresh reloads past the caches', afterRefresh.url);
+  check(/sepia/.test(afterRefresh.prefs || '') && /Kept/.test(afterRefresh.library || ''),
+    'force refresh keeps preferences and the reading list', afterRefresh);
+  check(afterRefresh.savedFigure, 'force refresh keeps saved papers', afterRefresh);
+
   await swCtx.close();
 }
 

@@ -37,3 +37,35 @@ export function registerServiceWorker(opts = {}) {
     } catch { /* offline support is optional */ }
   });
 }
+
+/**
+ * The escape hatch: drop the cached copy of this app's own code and reload.
+ *
+ * A stale worker cannot be argued with from inside the page it is serving,
+ * and the alternative — "clear site data" — also throws away preferences,
+ * the reading list and saved papers. This clears only the code cache and
+ * unregisters the worker, so the reload rebuilds from the network and
+ * everything you saved survives.
+ */
+export async function forceRefresh() {
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((reg) => reg.unregister().catch(() => {})));
+    }
+  } catch { /* nothing registered */ }
+
+  try {
+    if (typeof caches !== 'undefined') {
+      const keys = await caches.keys();
+      await Promise.all(keys
+        .filter((key) => key.startsWith('arxiv-mobi-shell'))   // code only
+        .map((key) => caches.delete(key).catch(() => {})));
+    }
+  } catch { /* storage unavailable */ }
+
+  // A changed query string defeats the HTTP cache as well as the worker.
+  const url = new URL(location.href);
+  url.searchParams.set('fresh', Date.now().toString(36));
+  location.replace(url.href);
+}

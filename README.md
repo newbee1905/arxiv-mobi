@@ -226,9 +226,14 @@ every load, so a new worker is picked up even though GitHub Pages serves
 reloads itself and the reader offers a *Reload* toast rather than yanking the
 page out from under you mid-paper.
 
-If you ever suspect you are on stale code, one hard reload settles it; the
-smoke test covers the case by redeploying a file underneath a live worker and
-asserting the new bytes come back.
+If you ever suspect you are on stale code there is an escape hatch that does
+not cost you anything: **Force refresh** — in the reader's ⋮ menu, and in the
+landing page footer. It unregisters the worker, deletes the cached *code*
+only, and reloads with a cache-busting query. Preferences, reading positions
+and saved papers are untouched, unlike "clear site data". The smoke test
+covers both halves: redeploying a file underneath a live worker and requiring
+the new bytes, and asserting force refresh keeps the reading list and saved
+figures.
 
 ## Privacy
 

@@ -12,7 +12,7 @@ import { createPeek, createBackChip } from './peek.js';
 import { renderToc, trackSections } from './toc.js';
 import * as library from './library.js';
 import { icon } from './icons.js';
-import { registerServiceWorker } from './sw-register.js';
+import { registerServiceWorker, forceRefresh } from './sw-register.js';
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -325,6 +325,7 @@ function buildMoreSheet() {
     { glyph: 'arrowup', label: 'Back to the top', act: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
     { glyph: 'book', label: 'Jump to references', act: jumpToBibliography },
     { glyph: 'refresh', label: 'Reload from arXiv', hint: 'Discard the cached copy and fetch again.', act: hardReload },
+    { glyph: 'bolt', label: 'Force refresh the app', hint: 'Rebuild the reader from the network. Keeps your settings and saved papers.', act: forceRefresh },
     { glyph: 'external', label: 'arXiv abstract page', href: arxivUrl.abs(parsed) },
     { glyph: 'file', label: 'Original PDF', href: arxivUrl.pdf(parsed) },
     { glyph: 'bolt', label: 'Try the ar5iv rendering', hint: 'Community LaTeXML build, useful when arXiv HTML is incomplete.', href: arxivUrl.ar5iv(parsed) },

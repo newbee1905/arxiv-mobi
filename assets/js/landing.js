@@ -6,7 +6,7 @@ import { parseArxivId, readerHref } from './arxiv-id.js';
 import * as prefs from './settings.js';
 import * as library from './library.js';
 import { icon } from './icons.js';
-import { registerServiceWorker } from './sw-register.js';
+import { registerServiceWorker, forceRefresh } from './sw-register.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -180,6 +180,14 @@ function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('is-open'), 2600);
 }
+
+/* ------------------------------ force refresh --------------------------- */
+
+$('forceRefresh').addEventListener('click', (e) => {
+  e.preventDefault();
+  toast('Rebuilding from the network…');
+  forceRefresh();
+});
 
 /* ---------------------------- service worker ---------------------------- */
 
